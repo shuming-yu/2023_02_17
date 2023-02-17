@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Document</title>
+  <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
+</head>
+
+<body>
+  <a href="/01. intro.html">01. intro.html</a>
+  <a href="/02. new-promise.html">02. new-promise.html</a>
+  <a href="/03. promise-api.html">03. promise-api.html</a>
+
+  <h1>Promise 基礎概念 - 處理非同步的問題</h1>
+  <!-- fetch, ajax - 透過http做溝通, axios -  -->
+  
+  
+
+  <h3>jQuery.ajax(): <a href="https://api.jquery.com/jQuery.ajax/">https://api.jquery.com/jQuery.ajax/</a></h3>
+  <h3>Axios: <a href="https://github.com/axios/axios">https://github.com/axios/axios</a></h3>
+  <h3>假資料參考 Random User Generator: <a href="https://randomuser.me/documentation">https://randomuser.me/documentation</a></h3>
+  <br>
+  <h3>常見的非同步問題（不限於 Ajax）</h3>
+  <ul>
+    <li>回呼地獄（callback hell） ( 非同步行為結束後插入另外一個非同步, 巢狀越來越嚴重 )</li>
+    <li>寫法不一致 ( .done & success )</li>
+    <li>無法同時執行（jQuery 有並行寫法，但不直覺）, ( 非同步行為執行時, 無法確保在什麼時間點開始&結束 )</li>
+  </ul>
+
+
+
+  <script>
+    console.log("Promise:", Promise); // function
+    console.dir(Promise);  // 屬性和屬性值
+
+    const url = 'https://randomuser.me/api/';
+
+    let data = {};
+
+    // 1. 非同步行為, 等所有程式碼執行完後才執行
+    function sample_ajax(){
+      // 1. .done
+      $.ajax({
+        url: url,
+        // async: false, // default - true, 異步, 不會等待
+      }).done(function (res) {
+        data = res.results;
+        console.log("res:", res);
+      });
+
+      // 2. success
+      // $.ajax({
+      //   url: url,
+      //   success: function(res){
+      //     data = res.results;
+      //     console.log("res:", res);
+      //   }
+      // });
+
+      console.log("data:", data);
+    }
+
+
+    // 2. 參考 : https://randomuser.me/documentation#seeds
+    function sample_ajax2(){
+      $.ajax({
+        url: url,
+      }).done(function (res) {
+        const seed = res.info.seed; // 取出 seed 值
+        console.log("res:", res);
+        console.log("seed:", seed);
+  
+        $.ajax({
+              // 變數    帶入 const seed 值
+          url: `${url}?seed=${seed}`,
+        }).done(function(res2) {
+          console.log("res2:", res2);
+        })
+  
+      });
+    }
+
+    
+    // 3. 
+    function sample_axios(){
+      axios.get(url)
+        .then((res) => {  // (1) 所有 Promise 都是使用 then 串接 (解決寫法不一致)
+          console.log(1, "res:", res)
+          const seed = res.data.info.seed;
+          return axios.get(`${url}?seed=${seed}`) // (2) return 行為會由下一個 then 接收 (解決回呼地獄)
+        })
+        .then((res) => {
+          console.log(2, "res:", res)
+        });
+    }
+
+    // 4. (3) 同時發出多個請求 (解決無法同時執行)
+    function sample_promise(){
+      Promise.all( [ axios.get(url), axios.get(url) ] )
+        .then( ( [res1, res2] ) => {
+          console.log('res1:', res1);
+          console.log('res2:', res2);
+        })
+        .catch(rej => {
+          console.log("錯誤");
+        })
+
+      // Promise.all( [ axios.get("http://localhost:5600/ProductMosMN/GetProductMosMNPartDatasHeader"), axios.get(url) ] )
+      //   .then( ( [res1, res2] ) => {
+      //     console.log('res1:', res1);
+      //     console.log('res2:', res2);
+      //   })
+      //   .catch(rej => {
+      //     console.log("錯誤");
+      //   })
+    }
+
+
+
+  </script>
+</body>
+
+</html>
